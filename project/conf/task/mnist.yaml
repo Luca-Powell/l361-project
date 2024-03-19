@@ -36,7 +36,7 @@ fed_test_config:
   net_config: {}
   # The testing function batch size can be as high as the GPU supports
   dataloader_config:
-    batch_size: 8
+    batch_size: 4
   # Unlike train, the mnist train function takes no parameters
   run_config: {}
   extra: {}

@@ -11,6 +11,8 @@ import numpy as np
 import shutil
 import logging
 from pathlib import Path
+from typing import Optional, Callable, Tuple, Any
+from PIL import Image
 
 import hydra
 from omegaconf import DictConfig, OmegaConf
@@ -20,37 +22,95 @@ from flwr.common.logger import log
 import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
-from torchvision.datasets import CIFAR10
+from torchvision.datasets import CIFAR10, VisionDataset
 
 from project.task.cifar10_classification.dataset_utils import create_lda_partitions
 
+class TorchVision_FL(VisionDataset):
+    """This is just a trimmed down version of torchvision.datasets.MNIST.
+
+    Use this class by either passing a path to a torch file (.pt)
+    containing (data, targets) or pass the data, targets directly
+    instead.
+    """
+
+    def __init__(
+        self,
+        path_to_data=None,
+        data=None,
+        targets=None,
+        transform: Optional[Callable] = None,
+    ) -> None:
+        path = path_to_data.parent if path_to_data else None
+        super(TorchVision_FL, self).__init__(path, transform=transform)
+        self.transform = transform
+
+        if path_to_data:
+            # load data and targets (path_to_data points to an specific .pt file)
+            self.data, self.targets = torch.load(path_to_data)
+        else:
+            self.data = data
+            self.targets = targets
+
+    def __getitem__(self, index: int) -> Tuple[Any, Any]:
+        img, target = self.data[index], int(self.targets[index])
+
+        # doing this so that it is consistent with all other datasets
+        # to return a PIL Image
+        if not isinstance(img, Image.Image):  # if not PIL image
+            if not isinstance(img, np.ndarray):  # if torch tensor
+                img = img.numpy()
+
+            img = Image.fromarray(img)
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+
+        return img, target
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+
+def get_dataloader(
+    path_to_data: str, 
+    cid: str, 
+    is_train: bool, 
+    batch_size: int, 
+    # workers: int,
+    generator
+):
+    """Generates trainset/valset object for a given client and
+        returns appropiate dataloader.
+    
+    """
+    dataset = _get_dataset(Path(path_to_data), cid, is_train)
+
+    # we use as number of workers all the cpu cores assigned to this actor
+    kwargs = {#"num_workers": workers, 
+              "pin_memory": True, 
+              "drop_last": False}
+    return DataLoader(dataset, batch_size=batch_size, generator=generator, **kwargs)
+
+
+def _get_dataset(path_to_data: Path, cid: str, is_train: bool):
+    """Generates Pytorch CIFAR10 object for a specific client's trainset/valset."""
+    
+    partition = "train" if is_train else "val"
+    
+    # path to client's data (depends on cid)
+    path_to_data = ( path_to_data / cid / (partition + ".pt"))  
+
+    return TorchVision_FL(path_to_data, transform=_get_cifar10_transform())
 
 def _get_cifar10_transform():
     return transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ])
-
-
-def _get_dataset(path_to_data: Path, cid: str, partition: str):
-    """Generates Pytorch CIFAR10 object for a specific client's trainset/valset."""
-    path_to_data = (
-        path_to_data / cid / (partition + ".pt")
-    )  # path to client's data (depends on cid)
-
-    return CIFAR10(path_to_data, transform=_get_cifar10_transform())
-
-
-def _get_dataloader(
-    path_to_data: str, cid: str, is_train: bool, batch_size: int, workers: int
-):
-    """Generates trainset/valset object and returns appropiate dataloader."""
-    partition = "train" if is_train else "val"
-    dataset = _get_dataset(Path(path_to_data), cid, partition)
-
-    # we use as number of workers all the cpu cores assigned to this actor
-    kwargs = {"num_workers": workers, "pin_memory": True, "drop_last": False}
-    return DataLoader(dataset, batch_size=batch_size, **kwargs)
 
 
 def _get_random_id_splits(total: int, val_ratio: float, shuffle: bool = True):

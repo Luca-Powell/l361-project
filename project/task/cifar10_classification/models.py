@@ -29,13 +29,16 @@ class Net(nn.Module):
         None
         """
         super().__init__()
-        self.conv1 = nn.Conv2d(1, 32, 5, padding=1)
+        
+        num_channels = 3
+        
+        self.conv1 = nn.Conv2d(num_channels, 32, 5, padding=1)
         self.conv2 = nn.Conv2d(32, 64, 5, padding=1)
         self.pool = nn.MaxPool2d(
             kernel_size=(2, 2),
             padding=1,
         )
-        self.fc1 = nn.Linear(64 * 7 * 7, 512)
+        self.fc1 = nn.Linear(4096, 512)
         self.fc2 = nn.Linear(512, num_classes)
 
     def forward(
@@ -66,21 +69,5 @@ class Net(nn.Module):
 
 # Simple wrapper to match the NetGenerator Interface
 get_net: NetGen = lazy_config_wrapper(Net)
-
-
-def get_net(_config: dict, rng_tuple: IsolatedRNG) -> nn.Module:
-    """Return a model instance.
-
-    Args:
-    config: A dictionary with the model configuration.
-    rng_tuple: The random number generator state for the training.
-        Use if you need seeded random behavior
-
-    Returns
-    -------
-    nn.Module
-        A PyTorch model.
-    """
-    return Net()
 
 # TODO: add Vision Transformer model as well
