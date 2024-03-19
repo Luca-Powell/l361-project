@@ -15,7 +15,8 @@ fit_config:
     batch_size: 4
   # Train function needs epochs, other args TBC
   run_config:
-    epochs: 5
+    epochs: 3
+    learning_rate: 0.01
   # no extra config (for now)
   extra: {}
 
