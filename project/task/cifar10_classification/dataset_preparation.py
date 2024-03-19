@@ -135,7 +135,11 @@ def _partition_data_LDA(
         The degree of non-iidness for the LDA partitioning.
 
     """
-    images, labels = torch.load(dataset_dir)
+    # ensure dataset_dir is of type Path, not str
+    if isinstance(dataset_dir, str):
+        dataset_dir = Path(dataset_dir)
+    
+    images, labels = torch.load(dataset_dir / "cifar-10-batches-py/training.pt")
 
     idx = np.array(range(len(images)))
     dataset = [idx, labels]
@@ -157,9 +161,12 @@ def _partition_data_LDA(
 
     # now save partitioned dataset to disk
     # first delete dir containing splits (if exists), then create it
-    splits_dir = partition_dir
+    splits_dir = Path(partition_dir)
     if splits_dir.exists():
+        print("Deleting existing partition directory")
         shutil.rmtree(splits_dir)
+    
+    print(f"Creating new partition directory at {splits_dir}")
     Path.mkdir(splits_dir, parents=True)
 
     for p in range(num_partitions):
@@ -207,11 +214,13 @@ def download_and_preprocess(cfg: DictConfig) -> None:
     # for parts that can be customised (e.g. how data is partitioned)
 
     # 2. Download the cifar-10 dataset
+    print("Downloading cifar10 dataset...")
     train_path, test_set = _download_cifar10_data(Path(cfg.dataset.dataset_dir))
-
-    torch.save(test_set)
-
+    print("Done!")
+    
     # 3. Partition the dataset
+    # _partition_data_LDA(*) creates and populates the partition directory
+    print("\nPartitioning...")
     _partition_data_LDA(
         dataset_dir=cfg.dataset.dataset_dir,
         partition_dir=cfg.dataset.partition_dir,
@@ -221,7 +230,12 @@ def download_and_preprocess(cfg: DictConfig) -> None:
         val_ratio=cfg.dataset.val_ratio,
         seed=cfg.dataset.seed,
     )
+    
+    # save the centralised test set in partition directory
+    partition_dir = Path(cfg.dataset.partition_dir)
+    torch.save(test_set, partition_dir / "test.pt")
 
+    print("Preprocessing finished.")
 
 if __name__ == "__main__":
 
