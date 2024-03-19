@@ -1,0 +1,36 @@
+---
+# Where to store data
+dataset_dir: ./data/cifar10/data
+
+# Folder of client folders
+# indexed by id, containing train and test
+# data in .pt format
+partition_dir: ./data/cifar10/partition
+
+# How many clients to create
+num_clients: 100
+
+# How large should the test set of each client
+# be relative to the train set
+val_ratio: 0.1
+
+# Seed for partition generation
+seed: 1337
+
+# 10 classes in cifar10 dataset 
+num_classes: 10
+
+# how iid to make the partitions when using LDA
+# partitioning
+alpha: 1000
+
+# If the partition labels 
+# should be independent and identically distributed
+iid: false
+
+# If the partition labels should follow a power law
+# distribution
+power_law: false
+
+# If the partition labels should be balanced
+balance: false
