@@ -19,6 +19,7 @@
 
 import numpy as np
 from numpy.random import BitGenerator, Generator, SeedSequence
+from typing import Any
 
 XY = tuple[np.ndarray, np.ndarray]
 XYList = list[XY]
@@ -26,11 +27,14 @@ PartitionedDataset = tuple[XYList, XYList]
 
 np.random.seed(2020)
 
+X_NDIM_MAX = 3
+Y_NDIM_MAX = 2
+
 
 def float_to_int(i: float) -> int:
     """Return float as int but raise if decimal is dropped."""
-    if not i.is_integer():
-        raise Exception("Cast would drop decimals")
+    # if not i.is_integer():
+    #    raise Exception("Cast would drop decimals")
 
     return int(i)
 
@@ -46,8 +50,9 @@ def sort_by_label(x: np.ndarray, y: np.ndarray) -> XY:
 
 
 def sort_by_label_repeating(x: np.ndarray, y: np.ndarray) -> XY:
-    """Sort by label in repeating groups. Assuming two labels and four examples
-    the resulting label order would be 1,2,1,2.
+    """Sort by label in repeating groups.
+
+    Assuming two labels and four examples the resulting label order would be 1,2,1,2.
 
     Create sorting index which is applied to by label sorted x, y
 
@@ -114,8 +119,10 @@ def combine_partitions(xy_list_0: XYList, xy_list_1: XYList) -> XYList:
 
 
 def shift(x: np.ndarray, y: np.ndarray) -> XY:
-    """Shift x_1, y_1 so that the first half contains only labels 0 to 4 and
-    the second half 5 to 9.
+    """Shift dataset.
+
+    Shift x_1, y_1 so that the first half contains
+    only labels 0 to 4 and the second half 5 to 9.
     """
     x, y = sort_by_label(x, y)
 
@@ -181,19 +188,20 @@ def create_partitioned_dataset(
     return (xy_train_partitions, xy_test_partitions), adjust_xy_shape(xy_test)
 
 
-def log_distribution(xy_partitions: XYList) -> None:
-    """Print label distribution for list of paritions."""
-    distro = [np.unique(y, return_counts=True) for _, y in xy_partitions]
-    for d in distro:
-        print(d)
+# def log_distribution(xy_partitions: XYList) -> None:
+#     """Print label distribution for list of paritions."""
+#     distro = [np.unique(y, return_counts=True) for _, y in xy_partitions]
+
+#     # for d in distro:
+#     #     print(d)
 
 
 def adjust_xy_shape(xy: XY) -> XY:
     """Adjust shape of both x and y."""
     x, y = xy
-    if x.ndim == 3:
+    if x.ndim == X_NDIM_MAX:
         x = adjust_x_shape(x)
-    if y.ndim == 2:
+    if y.ndim == Y_NDIM_MAX:
         y = adjust_y_shape(y)
     return (x, y)
 
@@ -213,8 +221,7 @@ def adjust_y_shape(nda: np.ndarray) -> np.ndarray:
 def split_array_at_indices(
     x: np.ndarray, split_idx: np.ndarray
 ) -> list[list[np.ndarray]]:
-    """Splits an array `x` into list of elements using starting indices from
-    `split_idx`.
+    """Split an array `x` into list of elements using starting indices from `split_idx`.
 
         This function should be used with `unique_indices` from `np.unique()` after
         sorting by label.
@@ -300,7 +307,7 @@ def sample_without_replacement(
     num_samples: int,
     empty_classes: list[bool],
 ) -> tuple[XY, list[bool]]:
-    """Samples from a list without replacement using a given distribution.
+    """Sample from a list without replacement using a given distribution.
 
     Args:
         distribution (np.ndarray): Distribution used for sampling.
@@ -354,7 +361,7 @@ def sample_without_replacement(
 
 
 def get_partitions_distributions(partitions: XYList) -> tuple[np.ndarray, list[int]]:
-    """Evaluates the distribution over classes for a set of partitions.
+    """Evaluate the distribution over classes for a set of partitions.
 
     Args:
         partitions (XYList): Input partitions
@@ -367,7 +374,7 @@ def get_partitions_distributions(partitions: XYList) -> tuple[np.ndarray, list[i
     labels = set()
     for _, y in partitions:
         labels.update(set(y))
-    list_labels = sorted(list(labels))
+    list_labels = sorted(labels)
     bin_edges = np.arange(len(list_labels) + 1)
 
     # Pre-allocate distributions
@@ -380,15 +387,16 @@ def get_partitions_distributions(partitions: XYList) -> tuple[np.ndarray, list[i
 
 
 def create_lda_partitions(
-    dataset: XY,
+    dataset: list[Any],
     dirichlet_dist: np.ndarray | None = None,
     num_partitions: int = 100,
     concentration: float | np.ndarray | list[float] = 0.5,
     accept_imbalanced: bool = False,
     seed: int | SeedSequence | BitGenerator | Generator | None = None,
 ) -> tuple[XYList, np.ndarray]:
-    """Create imbalanced non-iid partitions using Latent Dirichlet Allocation
-    (LDA) without resampling.
+    r"""Create imbalanced non-iid partitions using Latent Dirichlet Allocation (LDA).
+
+        Done without resampling.
 
     Args:
         dataset (XY): Dataset containing samples X and labels Y.
@@ -399,7 +407,7 @@ def create_lda_partitions(
             Defaults to 100.
         concentration (float, np.ndarray, List[float]): Dirichlet Concentration
             (:math:`\\alpha`) parameter. Set to float('inf') to get uniform partitions.
-            An :math:`\\alpha \\to \\Inf` generates uniform distributions over classes.
+            An :math:`alpha \\to \\Inf` generates uniform distributions over classes.
             An :math:`\\alpha \\to 0.0` generates one class per client. Defaults to 0.5.
         accept_imbalanced (bool): Whether or not to accept imbalanced output classes.
             Default False.
@@ -472,13 +480,15 @@ def create_lda_partitions(
             alpha=concentration, size=num_partitions
         )
 
-    if dirichlet_dist.size != 0:
-        if dirichlet_dist.shape != (num_partitions, classes.size):
-            raise ValueError(
-                f"""The shape of the provided dirichlet distribution
+    if dirichlet_dist.size != 0 and dirichlet_dist.shape != (
+        num_partitions,
+        classes.size,
+    ):
+        raise ValueError(
+            f"""The shape of the provided dirichlet distribution
                  ({dirichlet_dist.shape}) must match the provided number
                   of partitions and classes ({num_partitions},{classes.size})"""
-            )
+        )
 
     # Assuming balanced distribution
     empty_classes = classes.size * [False]

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-VPOETRY_HOME="/home/lucap/"
-VPYENV_ROOT="/home/lucap/"
+VPOETRY_HOME="/nfs-share/lp647"
+VPYENV_ROOT="/nfs-share/lp647"
 VPYTHON_VERSION="3.11.6"
 
 

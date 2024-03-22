@@ -78,7 +78,7 @@ def train(  # pylint: disable=too-many-arguments
 
     net.to(config.device)
     net.train()
-    
+
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(
         net.parameters(),

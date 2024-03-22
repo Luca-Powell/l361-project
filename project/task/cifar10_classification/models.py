@@ -4,8 +4,9 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from project.types.common import IsolatedRNG, NetGen
+from project.types.common import NetGen
 from project.utils.utils import lazy_config_wrapper
+
 
 class Net(nn.Module):
     """Convolutional Neural Network architecture.
@@ -29,9 +30,9 @@ class Net(nn.Module):
         None
         """
         super().__init__()
-        
+
         num_channels = 3
-        
+
         self.conv1 = nn.Conv2d(num_channels, 32, 5, padding=1)
         self.conv2 = nn.Conv2d(32, 64, 5, padding=1)
         self.pool = nn.MaxPool2d(

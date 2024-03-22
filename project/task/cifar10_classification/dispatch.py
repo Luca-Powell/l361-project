@@ -30,7 +30,7 @@ from project.task.default.dispatch import (
     init_working_dir as init_working_dir_default,
 )
 from project.task.cifar10_classification.dataset import get_dataloader_generators
-from project.task.cifar10_classification.models import get_net # TODO: , get_vit
+from project.task.cifar10_classification.models import get_net  # TODO: , get_vit
 from project.task.cifar10_classification.train_test import get_fed_eval_fn, test, train
 from project.types.common import DataStructure, TrainStructure
 
@@ -114,11 +114,11 @@ def dispatch_data(cfg: DictConfig, **kwargs: Any) -> DataStructure | None:
         "partition_dir",
         None,
     )
-    
+
     # print("Dispatching cifar10 data...")
     # print(f"client_model_and_data: --{client_model_and_data}--")
     # print(f"partition_dir: --{partition_dir}--")
-    
+
     # Only consider situations where both are not None
     # otherwise data loading would fail later
     if client_model_and_data is not None and partition_dir is not None:

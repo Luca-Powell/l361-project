@@ -18,12 +18,13 @@ from project.types.common import (
     IsolatedRNG,
 )
 
+from project.task.cifar10_classification.dataset_preparation import get_dataloader
+
 # Use defaults for this very simple dataset
 # Requires only batch size
 ClientDataloaderConfig = DefaultClientDataloaderConfig
 FedDataloaderConfig = DefaultFedDataloaderConfig
 
-from project.task.cifar10_classification.dataset_preparation import get_dataloader
 
 def get_dataloader_generators(
     partition_dir: Path,
@@ -72,18 +73,18 @@ def get_dataloader_generators(
         torch_cpu_generator = rng_tuple[3]
 
         # client_dir = partition_dir / f"{cid}"
-        
+
         # if not test:
         #     dataset = torch.load(client_dir / "train.pt")
         # else:
         #     dataset = torch.load(client_dir / "val.pt")
-        
+
         return get_dataloader(
             path_to_data=partition_dir,
             cid=cid,
             is_train=not test,
             batch_size=config.batch_size,
-            generator=torch_cpu_generator
+            generator=torch_cpu_generator,
         )
 
     def get_federated_dataloader(
