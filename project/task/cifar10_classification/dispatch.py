@@ -30,7 +30,7 @@ from project.task.default.dispatch import (
     init_working_dir as init_working_dir_default,
 )
 from project.task.cifar10_classification.dataset import get_dataloader_generators
-from project.task.cifar10_classification.models import get_net  # TODO: , get_vit
+from project.task.cifar10_classification.models import get_net, get_vit
 from project.task.cifar10_classification.train_test import get_fed_eval_fn, test, train
 from project.types.common import DataStructure, TrainStructure
 
@@ -139,13 +139,13 @@ def dispatch_data(cfg: DictConfig, **kwargs: Any) -> DataStructure | None:
                 fed_dataloader_gen,
                 init_working_dir_default,
             )
-        # elif client_model_and_data.upper() == "CIFAR10_VIT":
-        #     return (
-        #         get_vit,
-        #         client_dataloader_gen,
-        #         fed_dataloader_gen,
-        #         init_working_dir_default,
-        #     )
+        elif client_model_and_data.upper() == "CIFAR10_VIT":
+            return (
+                get_vit,
+                client_dataloader_gen,
+                fed_dataloader_gen,
+                init_working_dir_default,
+            )
 
     # Cannot match, send to next dispatch in chain
     return None

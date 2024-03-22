@@ -5,7 +5,7 @@ dataset_dir: ./data/cifar10/data
 # Folder of client folders
 # indexed by id, containing train and test
 # data in .pt format
-partition_dir: ./data/cifar10/partition
+partition_dir: ./data/cifar10/partition_alpha_1k
 
 # How many clients to create
 # used to determine how many partitions to make
@@ -22,7 +22,7 @@ seed: 1337
 num_classes: 10
 
 # how iid to make the partitions when using LDA
-# partitioning
+# partitioning (used by preprocessing script)
 alpha: 1000
 
 # If the partition labels 

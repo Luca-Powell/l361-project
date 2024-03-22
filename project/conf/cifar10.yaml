@@ -3,7 +3,7 @@ defaults:
   - _self_
   - task: cifar10
   - fed: cifar10
-  - strategy: fedavg  # TODO: change to FedOpt
+  - strategy: fedadam  # TODO: change to FedOpt
   - dataset: cifar10
 
 # If checkpointing is enabled,

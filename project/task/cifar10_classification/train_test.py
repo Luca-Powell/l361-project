@@ -4,6 +4,8 @@ from collections.abc import Sized
 from pathlib import Path
 from typing import cast
 
+import numpy as np
+
 import torch
 from pydantic import BaseModel
 from torch import nn
@@ -175,6 +177,10 @@ def test(
     criterion = nn.CrossEntropyLoss()
     correct, per_sample_loss = 0, 0.0
 
+    num_classes = 10
+
+    confusion_matrix = np.zeros((num_classes, num_classes))
+
     with torch.no_grad():
         for images, labels in testloader:
             images, labels = (
@@ -191,11 +197,20 @@ def test(
             _, predicted = torch.max(outputs.data, 1)
             correct += (predicted == labels).sum().item()
 
+            for idx in range(len(labels)):
+                confusion_matrix[predicted[idx], labels[idx]] += 1
+
+    # normalise confusion matrix
+    confusion_matrix /= np.sum(confusion_matrix, axis=None)
+    # make the confusion matrix json serializable
+    confusion_matrix = confusion_matrix.tolist()
+
     return (
         per_sample_loss / len(cast(Sized, testloader.dataset)),
         len(cast(Sized, testloader.dataset)),
         {
             "test_accuracy": float(correct) / len(cast(Sized, testloader.dataset)),
+            "test_confusion_matrix": confusion_matrix,
         },
     )
 
