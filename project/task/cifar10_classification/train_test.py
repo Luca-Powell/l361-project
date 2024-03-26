@@ -6,6 +6,7 @@ from typing import cast
 
 import numpy as np
 
+import json
 import torch
 from pydantic import BaseModel
 from torch import nn
@@ -156,7 +157,6 @@ def test(
         The random number generator state for the training.
         Use if you need seeded random behavior
 
-
     Returns
     -------
     Tuple[float, int, float]
@@ -181,6 +181,8 @@ def test(
 
     confusion_matrix = np.zeros((num_classes, num_classes))
 
+    batch_size = 0
+
     with torch.no_grad():
         for images, labels in testloader:
             images, labels = (
@@ -199,6 +201,37 @@ def test(
 
             for idx in range(len(labels)):
                 confusion_matrix[predicted[idx], labels[idx]] += 1
+
+            batch_size = len(images)
+
+    # check whether client validation or centralised testing...
+    # the centralised test set has 10000 observations, whereas
+    # clients should have 50 observations (for 100 clients)
+    #
+    # if centralised testing, save the current model activations
+    if 10000 // batch_size >= len(testloader):
+        current_round = 0
+        fname = "/nfs-share/lp647/L361/l361-project/project/current_round.json"
+        with open(fname, encoding="utf-8") as f:
+            current_round = json.load(f)["current_round"]
+
+        torch.manual_seed(1337)
+        global_activations_dir = "/nfs-share/lp647/L361/l361-project/outputs_custom\
+            /cifar10_cnn_alpha0p1/results/state/global_activations"
+
+        # get the activations after completing local training for the round
+        rand_img = torch.rand((1, 3, 32, 32)).to(config.device)
+        activations = net.get_activations(rand_img)
+        activations_path = Path(global_activations_dir)
+        activations_path.mkdir(parents=True, exist_ok=True)
+        activations_file = activations_path / f"round_{current_round}.json"
+
+        activations_dict = {
+            "activations": activations,
+        }
+
+        with open(activations_file, "w", encoding="utf-8") as f:
+            json.dump(activations_dict, f)
 
     # normalise confusion matrix
     confusion_matrix /= np.sum(confusion_matrix, axis=None)

@@ -3,11 +3,13 @@
 Make sure the model and dataset are not loaded before the fit function.
 """
 
+import json
 import random
 from pathlib import Path
+import torch
 
 import flwr as fl
-from flwr.common import NDArrays
+from flwr.common import NDArrays, ndarrays_to_parameters
 from pydantic import BaseModel
 from torch import nn
 
@@ -15,6 +17,7 @@ from project.fed.utils.utils import (
     generic_get_parameters,
     generic_set_parameters,
     get_isolated_rng_tuple,
+    custom_save_parameters_to_file,
 )
 from project.types.common import (
     CID,
@@ -138,12 +141,48 @@ class Client(fl.client.NumPyClient):
             config.dataloader_config,
             self.rng_tuple,
         )
+
         num_samples, metrics = self.train(
             self.net,
             trainloader,
             config.run_config,
             self.working_dir,
             self.rng_tuple,
+        )
+
+        fname = "/nfs-share/lp647/L361/l361-project/project/current_round.json"
+
+        current_round = 0
+        with open(fname, encoding="utf-8") as f:
+            current_round = json.load(f)["current_round"]
+
+        torch.manual_seed(1337)
+        # get the activations after completing local training for the round
+        dev = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        rand_img = torch.rand((1, 3, 32, 32)).to(dev)
+        activations = self.net.get_activations(rand_img)
+        activations_path = (
+            Path(config.extra["client_activations_dir"]) / f"round_{current_round}"
+        )
+        activations_path.mkdir(parents=True, exist_ok=True)
+        activations_file = activations_path / f"client_{self.cid}.json"
+
+        activations_dict = {
+            "activations": activations,
+        }
+
+        with open(activations_file, "w", encoding="utf-8") as f:
+            json.dump(activations_dict, f)
+
+        parameters_dir = (
+            Path(config.extra["client_parameters_dir"]) / f"round_{current_round}"
+        )
+        Path.mkdir(parameters_dir, parents=True, exist_ok=True)
+
+        custom_save_parameters_to_file(
+            parameters_dir=parameters_dir,
+            filename=f"client_{self.cid}",
+            parameters=ndarrays_to_parameters(self.get_parameters({})),
         )
 
         return (

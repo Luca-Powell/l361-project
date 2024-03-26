@@ -1,5 +1,6 @@
 """Flower server accounting for Weights&Biases+file saving."""
 
+import json
 import timeit
 from collections.abc import Callable
 from logging import INFO
@@ -64,6 +65,7 @@ class WandbServer(Server):
         self.server_rng = server_rng
         self.save_rng_to_file = save_rng_to_file
         self.save_history_to_file = save_history_to_file
+        self.curr_round = starting_round
 
     # pylint: disable=too-many-locals
     def fit(
@@ -124,6 +126,16 @@ class WandbServer(Server):
         start_time = timeit.default_timer()
 
         for current_round in range(self.starting_round + 1, num_rounds + 1):
+            # set the global current round for the clients to check
+
+            current_round_dict = {
+                "current_round": current_round,
+            }
+
+            fname = "/nfs-share/lp647/L361/l361-project/project/current_round.json"
+            with open(fname, "w", encoding="utf-8") as f:
+                json.dump(current_round_dict, f)
+
             # Train model and replace previous global model
             res_fit = self.fit_round(
                 server_round=current_round,

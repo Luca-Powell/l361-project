@@ -31,7 +31,6 @@ from project.fed.utils.utils import (
     get_save_parameters_to_file,
     get_save_rng_to_file,
     get_weighted_avg_metrics_agg_fn,
-    test_client,
 )
 from project.types.common import ClientGen, FedEvalFN, Folders
 from project.utils.utils import (
@@ -41,6 +40,7 @@ from project.utils.utils import (
     save_wandb_run_details,
     wandb_init,
 )
+
 
 # Make debugging easier when using Hydra + Ray
 os.environ["HYDRA_FULL_ERROR"] = "1"
@@ -60,6 +60,9 @@ def main(cfg: DictConfig) -> None:
     cfg : DictConfig
         An omegaconf object that stores the hydra config.
     """
+    # init global vars for clients to track round number
+    # settings_init()
+
     # Print parsed config
     log(logging.INFO, OmegaConf.to_yaml(cfg))
 
@@ -302,15 +305,15 @@ def main(cfg: DictConfig) -> None:
 
             # Runs fit and eval on either one client or all of them
             # Avoids launching ray for debugging purposes
-            test_client(
-                test_all_clients=cfg.debug_clients.all,
-                test_one_client=cfg.debug_clients.one,
-                client_generator=client_generator,
-                initial_parameters=initial_parameters,
-                total_clients=cfg.fed.num_total_clients,
-                on_fit_config_fn=on_fit_config_fn,
-                on_evaluate_config_fn=on_evaluate_config_fn,
-            )
+            # test_client(
+            #     test_all_clients=cfg.debug_clients.all,
+            #     test_one_client=cfg.debug_clients.one,
+            #     client_generator=client_generator,
+            #     initial_parameters=initial_parameters,
+            #     total_clients=cfg.fed.num_total_clients,
+            #     on_fit_config_fn=on_fit_config_fn,
+            #     on_evaluate_config_fn=on_evaluate_config_fn,
+            # )
 
             # Start Simulation
             # The ray_init_args are only necessary

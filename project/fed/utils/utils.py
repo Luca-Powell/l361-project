@@ -259,6 +259,36 @@ def get_save_parameters_to_file(
     return save_parameters_to_file
 
 
+def custom_save_parameters_to_file(
+    parameters_dir: Path,
+    filename: str,
+    parameters: Parameters,
+) -> None:
+    """Save the parameters to a file.
+
+    Parameters
+    ----------
+    parameters : Parameters
+        The parameters to save.
+
+    Returns
+    -------
+    None
+    """
+    parameters_dir.mkdir(parents=True, exist_ok=True)
+    with open(
+        parameters_dir / f"{filename}.{Ext.PARAMETERS}",
+        "wb",
+    ) as f:
+        # Since Parameters is a list of bytes
+        # save the length of each row and the data
+        # for deserialization
+        for data in parameters.tensors:
+            # Prepend the length of the data as a 4-byte integer
+            f.write(struct.pack("I", len(data)))
+            f.write(data)
+
+
 def get_save_history_to_file(
     history_dir: Path,
 ) -> Callable[[History], None]:

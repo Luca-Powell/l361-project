@@ -18,7 +18,9 @@ fit_config:
     epochs: 10
     learning_rate: 0.01
   # No extra config
-  extra: {}
+  extra:
+    client_activations_dir: /nfs-share/lp647/L361/l361-project/outputs_custom/cifar10_cnn_alpha0p1/results/state/client_activations
+    client_parameters_dir: /nfs-share/lp647/L361/l361-project/outputs_custom/cifar10_cnn_alpha0p1/results/state/client_parameters
 
 # Client eval config
 eval_config:
@@ -26,7 +28,7 @@ eval_config:
   # The testing function batch size can be as high as the GPU supports
   dataloader_config:
     batch_size: 8
-  # Unlike train, the mnist train function takes no parameters
+  # Unlike train, the cifar10 eval function takes no parameters
   run_config: {}
   extra: {}
 
@@ -38,7 +40,8 @@ fed_test_config:
   dataloader_config:
     batch_size: 8
   # Unlike train, the mnist train function takes no parameters
-  run_config: {}
+  run_config:
+    global_activations_dir: /nfs-share/lp647/L361/l361-project/outputs_custom/cifar10_cnn_alpha0p1/results/state/global_activations
   extra: {}
 
 # Configuration instructions for initial parameter 

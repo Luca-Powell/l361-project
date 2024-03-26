@@ -3,7 +3,7 @@ defaults:
   - _self_
   - task: cifar10
   - fed: cifar10
-  - strategy: fedadam  # TODO: change to FedOpt
+  - strategy: fedadam
   - dataset: cifar10
 
 # If checkpointing is enabled,
@@ -11,7 +11,8 @@ defaults:
 # just change the dir to {your_output_directory}
 hydra:
   run:
-    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: outputs/cifar10_cnn_centralized
+    # dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
     # dir: /path/to/your/output/directory
 
 # Working dir to save temporary files to

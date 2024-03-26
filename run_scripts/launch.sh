@@ -67,4 +67,6 @@ CUSTOM_HYDRA_ARGS="--config-name=cifar10 ++run_uuid=$run_uuid" # ++ray_address=a
 
 poetry run python -m project.main $CUSTOM_HYDRA_ARGS 
 
-# srun -w ngongotaha -c 8 --gres=gpu:1 --partition=interactive bash run_scripts/launch.sh
+# srun -w ngongotaha -c 8 --gres=gpu:1 --partition=interactive --job-name=bash bash run_scripts/launch.sh
+
+# srun -w ngongotaha -c 8 --gres=gpu:1 --partition=normal --job-name=bash bash run_scripts/launch.sh

@@ -3,7 +3,7 @@
 import torch
 import torch.nn.functional as F
 from torch import nn
-
+import copy
 from project.types.common import NetGen
 from project.utils.utils import lazy_config_wrapper
 
@@ -120,13 +120,13 @@ class ViT(nn.Module):
     def __init__(
         self,
         *,
-        image_size: int,
-        patch_size: int,
-        num_classes: int,
-        dim: int,
-        depth: int,
-        heads: int,
-        mlp_dim: int,
+        image_size: int = 32,
+        patch_size: int = 8,
+        num_classes: int = 10,
+        dim: int = 512,
+        depth: int = 10,
+        heads: int = 8,
+        mlp_dim: int = 1024,
         pool: str = "cls",
         channels: int = 3,
         dim_head: int = 64,
@@ -256,15 +256,48 @@ class Net(nn.Module):
         """
         output_tensor = F.relu(self.conv1(input_tensor))
         output_tensor = self.pool(output_tensor)
+
         output_tensor = F.relu(self.conv2(output_tensor))
+        output_tensor = self.pool(output_tensor)
+
+        output_tensor = torch.flatten(output_tensor, 1)
+        output_tensor = F.relu(self.fc1(output_tensor))
+
+        output_tensor = self.fc2(output_tensor)
+
+        return output_tensor
+
+    def get_activations(
+        self,
+        input_tensor: torch.Tensor,
+    ) -> list[torch.Tensor]:
+        """Get the layer activations for a given input."""
+        # for storing the activations after all non-linear steps
+        activations = []
+
+        output_tensor = F.relu(self.conv1(input_tensor))
+        activations.append(copy.deepcopy(output_tensor.detach().cpu().numpy().tolist()))
+
+        output_tensor = self.pool(output_tensor)
+        output_tensor = F.relu(self.conv2(output_tensor))
+        activations.append(copy.deepcopy(output_tensor.detach().cpu().numpy().tolist()))
+
         output_tensor = self.pool(output_tensor)
         output_tensor = torch.flatten(output_tensor, 1)
         output_tensor = F.relu(self.fc1(output_tensor))
+        activations.append(copy.deepcopy(output_tensor.detach().cpu().numpy().tolist()))
+
         output_tensor = self.fc2(output_tensor)
-        return output_tensor
+        return activations
 
 
-# Simple wrapper to match the NetGenerator Interface
+def load_cnn_pretrained_50percent() -> Net:
+    """Load a CNN pre-trained to 50% convergence on cifar10."""
+    return torch.load(
+        "/nfs-share/lp647/L361/l361-project/project/task/cifar10_classification/models_pretrained/cnn_pretrained_cifar10_50p_batch32.pt"
+    )
+
+
+# Simple wrappers to match the NetGenerator interface
 get_net: NetGen = lazy_config_wrapper(Net)
-
-# TODO: add Vision Transformer model as well
+get_net_pretrained_50: NetGen = lazy_config_wrapper(load_cnn_pretrained_50percent)

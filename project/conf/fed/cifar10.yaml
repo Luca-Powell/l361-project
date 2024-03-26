@@ -1,16 +1,16 @@
 ---
 # Federated setup
-num_rounds: 30
+num_rounds: 20
 num_total_clients: 100
 num_clients_per_round: 10
-num_evaluate_clients_per_round: 25
+num_evaluate_clients_per_round: 20
 
 # If clients should be sampled with replacement
 # when the dataset is not large enough
 enable_resampling: false
 
 # Client resources
-cpus_per_client: 2
+cpus_per_client: 8
 gpus_per_client: 1
 
 # Seed for client selection
@@ -24,7 +24,9 @@ seed: 1337
 load_saved_state: true
 # The round from which to load the parameters
 # if null it will load the most recent round
-server_round: null
+# cifar CNN - 50% at server_round = 9
+# cifar ViT - 50% at server_round = 12
+server_round: 9
 
 # Path to the folder where the parameters are located,  leave null if you want to use automatic detection from the results folder
 parameters_folder: null

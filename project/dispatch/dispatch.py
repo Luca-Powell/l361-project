@@ -23,7 +23,6 @@ from project.task.cifar10_classification.dispatch import (
     dispatch_train as dispatch_cifar10_train,
 )
 
-
 from project.types.common import ConfigStructure, DataStructure, TrainStructure
 
 
